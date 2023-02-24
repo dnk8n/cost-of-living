@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cost Comparison Form</title>
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+</head>
+
+<body>
+    <form id="cost-comparison-form">
+        <label for="local-country">Local Country:</label>
+        <select id="local-country" name="local-country">
+            <!-- Populate this dropdown with a list of all possible countries, preferably from a trustworthy up-to-date source -->
+        </select>
+        <br><br>
+        <label for="local-city">Local City:</label>
+        <select id="local-city" name="local-city">
+            <!-- This dropdown will be populated based on the country selected in the previous dropdown, using an API call to a trustworthy up-to-date source -->
+        </select>
+        <br><br>
+        <label for="monthly-cost">Monthly Cost (${local_city_currency}):</label>
+        <input type="text" id="monthly-cost" name="monthly-cost">
+        <br><br>
+        <label for="comparison-cities">Cities to Compare:</label>
+        <select multiple id="comparison-cities" name="comparison-cities[]">
+            <!-- Populate this dropdown with a list of cities from around the world, like the local city dropdown -->
+        </select>
+        <br><br>
+        <input type="checkbox" id="download-csv" name="download-csv">
+        <label for="download-csv">Download CSV</label>
+        <br><br>
+        <input type="checkbox" id="send-csv-by-email" name="send-csv-by-email">
+        <label for="send-csv-by-email">Send CSV by Email</label>
+        <br><br>
+        <div id="email-address-group" style="display: none;">
+            <label for="email-address">Email Address:</label>
+            <input type="email" id="email-address" name="email-address">
+            <br><br>
+        </div>
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        const form = document.querySelector('#cost-comparison-form');
+        const localCountryDropdown = document.querySelector('#local-country');
+        const localCityDropdown = document.querySelector('#local-city');
+        const comparisonCitiesDropdown = document.querySelector('#comparison-cities');
+        const sendCsvByEmailCheckbox = document.querySelector('#send-csv-by-email');
+        const downloadCsvCheckbox = document.querySelector('#download-csv');
+        const emailAddressGroup = document.querySelector('#email-address-group');
+        const emailAddressInput = document.querySelector('#email-address');
+
+        const countries = [
+            '---Select country---',
+            'Afghanistan',
+            'Aland Islands',
+            'Albania',
+            'Alderney',
+            'Algeria',
+            'American Samoa',
+            'Andorra',
+            'Angola',
+            'Anguilla',
+            'Antigua And Barbuda',
+            'Argentina',
+            'Armenia',
+            'Aruba',
+            'Australia',
+            'Austria',
+            'Azerbaijan',
+            'Bahamas',
+            'Bahrain',
+            'Bangladesh',
+            'Barbados',
+            'Belarus',
+            'Belgium',
+            'Belize',
+            'Benin',
+            'Bermuda',
+            'Bhutan',
+            'Bolivia',
+            'Bonaire',
+            'Bosnia And Herzegovina',
+            'Botswana',
+            'Brazil',
+            'British Virgin Islands',
+            'Brunei',
+            'Bulgaria',
+            'Burkina Faso',
+            'Burundi',
+            'Cambodia',
+            'Cameroon',
+            'Canada',
+            'Cape Verde',
+            'Cayman Islands',
+            'Central African Republic',
+            'Chad',
+            'Chile',
+            'China',
+            'Colombia',
+            'Comoros',
+            'Congo',
+            'Cook Islands',
+            'Costa Rica',
+            'Croatia',
+            'Cuba',
+            'Curacao',
+            'Cyprus',
+            'Czech Republic',
+            'Denmark',
+            'Djibouti',
+            'Dominica',
+            'Dominican Republic',
+            'Ecuador',
+            'Egypt',
+            'El Salvador',
+            'Equatorial Guinea',
+            'Eritrea',
+            'Estonia',
+            'Ethiopia',
+            'Falkland Islands',
+            'Faroe Islands',
+            'Fiji',
+            'Finland',
+            'France',
+            'French Guiana',
+            'French Polynesia',
+            'French Southern Territories',
+            'Gabon',
+            'Gambia',
+            'Georgia',
+            'Germany',
+            'Ghana',
+            'Gibraltar',
+            'Greece',
+            'Greenland',
+            'Grenada',
+            'Guadeloupe',
+            'Guam',
+            'Guatemala',
+            'Guernsey',
+            'Guinea',
+            'Guinea-Bissau',
+            'Guyana',
+            'Haiti',
+            'Honduras',
+            'Hong Kong (China)',
+            'Hungary',
+            'Iceland',
+            'India',
+            'Indonesia',
+            'Iran',
+            'Iraq',
+            'Ireland',
+            'Isle Of Man',
+            'Israel',
+            'Italy',
+            'Ivory Coast',
+            'Jamaica',
+            'Japan',
+            'Jersey',
+            'Jordan',
+            'Kazakhstan',
+            'Kenya',
+            'Kiribati',
+            'Kosovo (Disputed Territory)',
+            'Kuwait',
+            'Kyrgyzstan',
+            'Laos',
+            'Latvia',
+            'Lebanon',
+            'Lesotho',
+            'Liberia',
+            'Libya',
+            'Liechtenstein',
+            'Lithuania',
+            'Luxembourg',
+            'Macao (China)',
+            'Madagascar',
+            'Malawi',
+            'Malaysia',
+            'Maldives',
+            'Mali',
+            'Malta',
+            'Marshall Islands',
+            'Martinique',
+            'Mauritania',
+            'Mauritius',
+            'Mexico',
+            'Micronesia',
+            'Moldova',
+            'Monaco',
+            'Mongolia',
+            'Montenegro',
+            'Montserrat',
+            'Morocco',
+            'Mozambique',
+            'Myanmar',
+            'Namibia',
+            'Nauru',
+            'Nepal',
+            'Netherlands',
+            'New Caledonia',
+            'New Zealand',
+            'Nicaragua',
+            'Niger',
+            'Nigeria',
+            'Norfolk Island',
+            'North Korea',
+            'North Macedonia',
+            'Northern Mariana Islands',
+            'Norway',
+            'Oman',
+            'Pakistan',
+            'Palau',
+            'Palestine',
+            'Panama',
+            'Papua New Guinea',
+            'Paraguay',
+            'Peru',
+            'Philippines',
+            'Poland',
+            'Portugal',
+            'Puerto Rico',
+            'Qatar',
+            'Republic Of Congo',
+            'Reunion',
+            'Romania',
+            'Russia',
+            'Rwanda',
+            'Saint Helena',
+            'Saint Kitts And Nevis',
+            'Saint Lucia',
+            'Saint Vincent And The Grenadines',
+            'Samoa',
+            'San Marino',
+            'Sao Tome And Principe',
+            'Saudi Arabia',
+            'Senegal',
+            'Serbia',
+            'Seychelles',
+            'Sierra Leone',
+            'Singapore',
+            'Sint Maarten',
+            'Slovakia',
+            'Slovenia',
+            'Solomon Islands',
+            'Somalia',
+            'South Africa',
+            'South Korea',
+            'South Sudan',
+            'Spain',
+            'Sri Lanka',
+            'Sudan',
+            'Suriname',
+            'Swaziland',
+            'Sweden',
+            'Switzerland',
+            'Syria',
+            'Taiwan (China)',
+            'Tajikistan',
+            'Tanzania',
+            'Thailand',
+            'Timor-Leste',
+            'Togo',
+            'Tonga',
+            'Trinidad And Tobago',
+            'Tunisia',
+            'Turkey',
+            'Turkmenistan',
+            'Turks And Caicos Islands',
+            'Tuvalu',
+            'Uganda',
+            'Ukraine',
+            'United Arab Emirates',
+            'United Kingdom',
+            'United States',
+            'Uruguay',
+            'Us Virgin Islands',
+            'Uzbekistan',
+            'Vanuatu',
+            'Vatican City',
+            'Venezuela',
+            'Vietnam',
+            'Western Sahara',
+            'Yemen',
+            'Zambia',
+            'Zimbabwe'
+        ];
+        countries.forEach(country => {
+            const option = document.createElement('option');
+            option.text = country;
+            localCountryDropdown.add(option);
+        });
+
+        // When the local country dropdown changes, populate the local city dropdown with a list of all possible cities of the country selected,
+        // preferably from a trustworthy up-to-date source
+        localCountryDropdown.addEventListener('change', async () => {
+            const country = localCountryDropdown.value;
+            const response = await fetch(`https://example.com/v1/api/cities?country=${country}`);
+            const cities = await response.json();
+            localCityDropdown.innerHTML = '';
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.text = city;
+                localCityDropdown.add(option);
+            });
+        });
+
+        // When the form is submitted, build the data object and submit a POST request to the API
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+
+            const data = {
+                'local_country': localCountryDropdown.value,
+                'local_city': localCityDropdown.value,
+                'monthly_cost': sanitizeCurrencyInput(document.querySelector('#monthly-cost').value),
+                'comparison_cities': Array.from(comparisonCitiesDropdown.selectedOptions).map(option => {
+                    const cityData = option.value.split(',');
+                    return [cityData[0], cityData[1]];
+                })
+            };
+
+            const response = await fetch('https://example.com/v1/api', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (sendCsvByEmailCheckbox.checked) {
+                const emailAddress = emailAddressInput.value;
+                const csvData = await response.json();
+                // Use an email API to send the CSV to the provided email address
+                // For simplicity, we'll just log the CSV data to the console instead
+                console.log(csvData);
+            }
+
+            if (downloadCsvCheckbox.checked) {
+                const csvData = await response.json();
+                // Download the CSV data as a file
+                const blob = new Blob([csvData], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'cost-comparison.csv';
+                link.click();
+            }
+        });
+
+        // Show or hide the email address input based on whether the send CSV by email checkbox is checked
+        sendCsvByEmailCheckbox.addEventListener('change', () => {
+            if (sendCsvByEmailCheckbox.checked) {
+                emailAddressGroup.style.display = 'block';
+            } else {
+                emailAddressGroup.style.display = 'none';
+            }
+        });
+
+        // Sanitize the monthly cost input to a suitable number format for currency, in units of local city's currency
+        function sanitizeCurrencyInput(input) {
+            // For simplicity, we'll just remove any non-numeric characters
+            return input.replace(/[^\d.]/g, '');
+        }
+    </script>
+
+</body>
+
+</html>
